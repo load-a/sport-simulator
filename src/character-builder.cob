@@ -17,12 +17,12 @@ FD Character-Sheet.
 
 WORKING-STORAGE SECTION.
   01 valid-index  PIC 9 VALUE 0.
-    88 is-valid   VALUE 1.
-    88 not-valid  VALUE 0.
-  01 response     PIC X(20).
+    88 new-index   VALUE 1.
+    88 old-index  VALUE 0.
+  01 response     PIC X(60).
     88 yes        VALUE "Y".
     88 quit       VALUE "N".
-    88 player     VALUE "PC".
+    88 pc         VALUE "PC".
     88 npc        VALUE "NPC".
   01 input-number PIC 999.
     88 valid-die VALUE 2, 4, 6, 8, 10, 12, 20.
@@ -66,7 +66,7 @@ CREATION SECTION.
 Create-Character.
   PERFORM Create-Name
 
-  IF is-valid
+  IF new-index
     PERFORM Basic-Details
 
     PERFORM Preview-Character
@@ -83,13 +83,26 @@ Create-Character.
 
 Create-Name.
   MOVE "ENTER INDEX / SHORT NAME (10)" TO question.
-  PERFORM Ask.
-  PERFORM Validate-Name.
+  PERFORM Ask
+  PERFORM Validate-Name
+
+  IF old-index
+    MOVE "EDIT CHARACTER" TO question
+    PERFORM Confirm
+
+    IF yes
+      SET new-index TO TRUE
+    END-IF
+  END-IF.
 
 Basic-Details.
   MOVE "ENTER LONG NAME (21)" TO question
   PERFORM Ask
   MOVE response TO long-name
+
+  MOVE "ENTER AGE (##)" TO question
+  PERFORM Ask-Number
+  Move input-number to age
 
   MOVE "ENTER ORIGINAL TEAM (20)" TO question
   PERFORM Ask
@@ -114,13 +127,19 @@ Basic-Details.
   PERFORM Ask
   PERFORM Validate-Type.
 
+  IF teammate
+    MOVE "ENTER ADDITIONAL INFO (60)" TO question
+    PERFORM Ask
+    MOVE response TO info
+  END-IF
+
   MOVE "FINE TUNE CHARACTER" TO question
   PERFORM Confirm.
 
   IF yes
     PERFORM Advanced-Details
   ELSE
-    DISPLAY "USING DEFAULT VALUES"
+    DISPLAY "USING DEFAULT VALUES..."
     MOVE "bench" TO task
     MOVE 1.00 TO energy
     MOVE 0 TO experience
@@ -145,7 +164,7 @@ Advanced-Details.
   Move input-number to level.
 
 Save-Character.
-  DISPLAY "ADDING NEW RECORD..."
+  DISPLAY "WRITING RECORD..."
 
   OPEN I-O Character-Sheet
     WRITE character-record INVALID KEY
@@ -160,10 +179,10 @@ Validate-Name.
     MOVE response TO short-name
     READ Character-Sheet KEY IS short-name
       INVALID KEY 
-        SET is-valid TO TRUE
+        SET new-index TO TRUE
       NOT INVALID KEY 
         DISPLAY FUNCTION TRIM(short-name) " IS ALREADY IN RECORD"
-        SET not-valid TO TRUE
+        SET old-index TO TRUE
     END-READ.
   CLOSE Character-Sheet.
 
@@ -176,11 +195,11 @@ Validate-Die.
 Validate-Type.
   PERFORM Case-Response
 
-  IF player
+  IF pc
     SET character-type to "PLAYER"
   ELSE IF npc
     SET character-type to "NPC"
   ELSE
-    DISPLAY "DEFAULTING CHARACTER TO TEST"
+    DISPLAY "DEFAULTING CHARACTER TO TEST..."
     SET character-type to "TEST"
   END-IF.
