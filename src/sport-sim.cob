@@ -13,7 +13,7 @@ FILE-CONTROL.
 DATA DIVISION.
 FILE SECTION.
 FD CharacterSheet.
-  COPY "copy/character-record.cpy".
+  COPY "copy/data/character-record.cpy".
 
 WORKING-STORAGE SECTION.
   01 File-Status PIC 99.
@@ -39,4 +39,4 @@ Main-logic.
 STOP RUN.
 
 USER-INTERFACE SECTION.
-COPY "copy/character-preview.cpy".
+COPY "copy/procedure/character-preview.cpy".

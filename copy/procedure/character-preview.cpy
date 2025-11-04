@@ -8,7 +8,7 @@ Preview-Character.
   DISPLAY "Power: " power
   DISPLAY "Focus: " focus
   DISPLAY "Speed: " speed
-  DISPLAY "Energy: x" energy
+  DISPLAY "Vigor: x" energy
   DISPLAY SPACES
   DISPLAY "Team: " team
   DISPLAY "Type: " character-type
