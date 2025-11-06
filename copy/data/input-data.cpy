@@ -1,5 +1,5 @@
 01 question     PIC X(40).
-01 response     PIC X(60).
+01 response     PIC X(80).
   88 confirmed  VALUE "Y", "YES".
   88 denied     VALUE "X", "EXIT", "N", "NO", "Q", "QUIT".
 01 input-number PIC 999.

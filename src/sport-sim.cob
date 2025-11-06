@@ -31,7 +31,7 @@ Main-logic.
           AT END
             SET end-of-file TO TRUE
           NOT AT END
-            PERFORM Preview-Character
+            PERFORM Developer-View-Character
         END-READ
       END-PERFORM
     END-START
