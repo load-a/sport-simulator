@@ -16,8 +16,6 @@ Preview-Character.
   DISPLAY "Power: " power-stat " +" power-bonus "                            Body:   " body
   DISPLAY "Focus: " focus-stat " +" focus-bonus "                            Mind:   " mind
   DISPLAY "Speed: " speed-stat " +" speed-bonus "                            Spirit: " spirit
-  DISPLAY SPACES
-  DISPLAY "Friends: "
   DISPLAY SPACES.
 
 Developer-View-Character.
@@ -39,6 +37,4 @@ Developer-View-Character.
   DISPLAY "Power: " power-stat " +" power-bonus "                            Body:   " body
   DISPLAY "Focus: " focus-stat " +" focus-bonus "                            Mind:   " mind
   DISPLAY "Speed: " speed-stat " +" speed-bonus "                            Spirit: " spirit
-  DISPLAY SPACES
-  DISPLAY "Friends: "
   DISPLAY SPACES.

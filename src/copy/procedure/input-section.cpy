@@ -18,6 +18,12 @@ USER-INTERFACE SECTION.
       SET denied TO TRUE
     END-IF.
 
+  Clear-Input-Data.
+    MOVE SPACES TO question
+    MOVE SPACES TO response
+    MOVE ZEROS  TO input-number
+    SET empty-input TO TRUE.
+
 RESPONSE-FORMATTING SECTION.
   Normalize-Response.
     PERFORM Trim-Response

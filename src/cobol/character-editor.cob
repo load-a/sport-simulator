@@ -1,5 +1,5 @@
 IDENTIFICATION DIVISION.
-PROGRAM-ID. Character-Builder.
+PROGRAM-ID. Character-Editor.
 
 ENVIRONMENT DIVISION.
 INPUT-OUTPUT SECTION.
@@ -13,18 +13,23 @@ FILE-CONTROL.
 DATA DIVISION.
 FILE SECTION.
 FD Character-Sheet.
-  COPY "copy/data/character-record.cpy".
+  COPY "src/copy/data/character-record.cpy".
 
 WORKING-STORAGE SECTION.
-  COPY "copy/data/input-data.cpy".
+  COPY "src/copy/data/input-data.cpy".
 
   01 Mode-Status PIC 9 VALUE ZERO.
     88 decide-mode      VALUE 0.
     88 create-mode      VALUE 1.
-    88 edit-delete-mode VALUE 2.
-    88 edit-mode        VALUE 3.
-    88 delete-mode      VALUE 4.
+    88 edit-mode        VALUE 2.
+    88 delete-mode      VALUE 3.
+    88 list-mode        VALUE 4.
     88 quit-mode        VALUE 9.
+
+  01 Character-Status PIC 9 VALUE ZEROS.
+    88 invalid-character VALUE 0.
+    88 new-character VALUE 1.
+    88 existing-character VALUE 2.
 
   01 Field-Table.
     02 field-buffer PIC X(10).
@@ -45,40 +50,138 @@ PROCEDURE DIVISION.
   STOP RUN.
 
   Main-Loop.
-    PERFORM Decision-Loop UNTIL quit-mode
-    SET decide-mode TO TRUE
-    MOVE "CONTINUE WITH ANOTHER CHARACTER" TO question
-    PERFORM Confirm.
+    PERFORM UNTIL quit-mode
+      PERFORM Get-Mode
+      PERFORM Execute-Mode
+    END-PERFORM.
 
-  Decision-Loop.
+  Get-Mode.
+    MOVE "[C]REATE, [E]DIT, [L]IST, [D]ELETE or [Q]UIT" TO question
+    PERFORM Ask
+    PERFORM Normalize-Response
+
+    EVALUATE response(1:1)
+      WHEN "C"
+        SET create-mode TO TRUE
+      WHEN "E"
+        SET edit-mode TO TRUE
+      WHEN "L"
+        SET list-mode TO TRUE
+      WHEN "D"
+        SET delete-mode TO TRUE
+      WHEN "Q"
+        SET quit-mode TO TRUE
+      WHEN OTHER
+        DISPLAY "INVALID CHOICE: " response
+    END-EVALUATE.
+
+  Execute-Mode.
     EVALUATE Mode-Status
     WHEN 1
-      PERFORM Assign-All-Fields
-      PERFORM Try-Save-Character
+      PERFORM Try-Crate-Character UNTIL denied
     WHEN 2
-      MOVE "EDIT THIS CHARACTER" TO question
+      PERFORM Try-Edit-Character UNTIL denied
+    WHEN 3
+      PERFORM Try-Delete-Character UNTIL denied
+    WHEN 4
+      PERFORM List-Characters
+    WHEN 9
+      DISPLAY "EXITING..."
+      EXIT PARAGRAPH
+    WHEN OTHER
+      DISPLAY "INVALID MODE: " Mode-Status
+    END-EVALUATE
+
+    SET decide-mode TO TRUE.
+
+  Try-Crate-Character.
+    PERFORM Lookup-Key
+
+    IF new-character
+      DISPLAY "CREATING NEW CHARACTER..."
+      PERFORM Assign-All-Fields
+      PERFORM Try-Record-Character
+    ELSE IF existing-character
+      DISPLAY "CANNOT CREATE EXISTING CHARACTER."
+      PERFORM Clear-Input-Data
+    ELSE
+      DISPLAY "CANNOT CREATE INVALID CHARACTER: " response
+    END-IF
+
+    MOVE "CREATE ANOTHER CHARACTER" TO question
+    PERFORM Confirm
+
+    IF denied
+      SET decide-mode TO TRUE
+    END-IF.
+
+  Try-Edit-Character.
+    PERFORM Lookup-Key
+
+    IF new-character
+      DISPLAY "CANNOT EDIT NEW CHARACTER."
+      PERFORM Clear-Input-Data
+    ELSE IF existing-character
+      DISPLAY "EDITING CHARACTER..."
+      PERFORM Developer-View-Character
+      PERFORM Select-Field UNTIL denied
+      PERFORM Try-Record-Character
+    ELSE
+      DISPLAY "CANNOT EDIT INVALID CHARACTER: " response
+    END-IF
+
+    MOVE "EDIT ANOTHER CHARACTER" TO question
+    PERFORM Confirm
+
+    IF denied
+      SET decide-mode TO TRUE
+    END-IF.
+
+  Try-Delete-Character.
+    PERFORM Lookup-Key
+
+    IF new-character
+      DISPLAY "CANNOT DELETE NEW CHARACTER."
+      PERFORM Clear-Input-Data
+    ELSE IF existing-character
+      PERFORM Developer-View-Character
+      MOVE "ARE YOU SURE YOU WANT TO DELETE THIS CHARACTER" TO question
       PERFORM Confirm
 
       IF confirmed
-        SET edit-mode TO TRUE
-      ELSE
-        PERFORM Try-Delete-Character
+        OPEN I-O Character-Sheet
+          DELETE Character-Sheet
+            INVALID KEY DISPLAY "INVARIANT VIOLATION: TRIED TO DELETE INVALID KEY."
+          END-DELETE
+        CLOSE Character-Sheet
       END-IF
-    WHEN 3
-      PERFORM Developer-View-Character
-      PERFORM Select-Field UNTIL denied
-      PERFORM Try-Save-Character
-    WHEN 4
-      OPEN I-O Character-Sheet
-        DELETE Character-Sheet
-          INVALID KEY DISPLAY "IMPOSSIBLE ERROR: TRIED TO DELETE INVALID KEY."
-        END-DELETE
-      CLOSE Character-Sheet
+    ELSE
+      DISPLAY "CANNOT DELETE INVALID CHARACTER: " response
+    END-IF
 
-      SET quit-mode TO TRUE
-    WHEN OTHER
-      PERFORM Lookup-Key
-    END-EVALUATE.
+    MOVE "DELETE ANOTHER CHARACTER" TO question
+    PERFORM Confirm
+
+    IF denied
+      SET decide-mode TO TRUE
+    END-IF.
+
+  List-Characters.
+      OPEN INPUT Character-Sheet
+      MOVE LOW-VALUE TO short-name
+      START Character-Sheet KEY >= short-name
+        INVALID KEY DISPLAY "NO RECORDS FOUND"
+        NOT INVALID KEY
+          PERFORM UNTIL end-of-file
+            READ Character-Sheet NEXT RECORD
+              AT END
+                SET end-of-file TO TRUE
+              NOT AT END
+                PERFORM Developer-View-Character
+            END-READ
+          END-PERFORM
+        END-START
+      CLOSE Character-Sheet.
 
 CHARACTER-EDIT SECTION.
   Assign-All-Fields.
@@ -285,7 +388,7 @@ CHARACTER-EDIT SECTION.
         END-IF
     END-EVALUATE.
 
-  Try-Save-Character.
+  Try-Record-Character.
     PERFORM Developer-View-Character
 
     MOVE "RECORD THIS CHARACTER" TO question
@@ -298,30 +401,13 @@ CHARACTER-EDIT SECTION.
     SET quit-mode TO TRUE.
 
   Record-Character.
-    DISPLAY "WRITING RECORD..."
+    DISPLAY "WRITING CHARACTER RECORD..."
 
     OPEN I-O Character-Sheet
       WRITE character-record INVALID KEY
         REWRITE character-record
       END-WRITE
     CLOSE Character-Sheet.
-
-  Try-Delete-Character.
-    MOVE "DELETE CHARACTER" TO question
-    PERFORM Confirm
-
-    IF confirmed
-      PERFORM Developer-View-Character
-
-      MOVE "ARE YOU SURE YOU WANT TO DELETE THIS CHARACTER" TO question
-      PERFORM Confirm
-
-      IF confirmed
-        SET delete-mode TO TRUE
-      END-IF
-    END-IF
-
-    SET decide-mode TO TRUE.
 
   Select-Field.
     MOVE "ENTER A FIELD" TO question
@@ -340,7 +426,9 @@ CHARACTER-EDIT SECTION.
   Lookup-Key.
     MOVE "ENTER KEY (SHORT-NAME) (10)" TO question.
     PERFORM Ask
-    PERFORM Validate-Key.
+    PERFORM Normalize-Response
+    PERFORM Validate-Key
+    PERFORM Validate-Character-Status.
 
 VALIDATION SECTION.
   Validate-Die.
@@ -352,23 +440,25 @@ VALIDATION SECTION.
   Validate-Key.
     IF empty-input OR invalid-text
       SET invalid-key TO TRUE
-      DISPLAY "CANNOT USE EMPTY INDEX."
     ELSE
       SET valid-key TO TRUE
-      PERFORM Determine-Mode
     END-IF.
 
-  Determine-Mode.
+  Validate-Character-Status.
+    IF invalid-key
+      SET invalid-character TO TRUE
+      EXIT PARAGRAPH
+    END-IF
+
     OPEN I-O Character-Sheet
-      PERFORM Normalize-Response
       MOVE response TO short-name
       READ Character-Sheet KEY IS short-name
         INVALID KEY 
-          SET create-mode TO TRUE
-          DISPLAY "ENTERING CREATE-MODE..."
+          DISPLAY FUNCTION TRIM(short-name) " IS NOT IN RECORD."
+          SET new-character TO TRUE
         NOT INVALID KEY 
-          SET edit-delete-mode TO TRUE
-          DISPLAY FUNCTION TRIM(short-name) " IS ALREADY IN RECORD"
+          DISPLAY FUNCTION TRIM(short-name) " IS ALREADY IN RECORD."
+          SET existing-character TO TRUE
       END-READ
     CLOSE Character-Sheet.
 
@@ -492,5 +582,7 @@ TABLE-SECTION.
       PERFORM Increment-Index
     END-PERFORM.
 
-COPY "copy/procedure/input-section.cpy".
-COPY "copy/procedure/character-preview.cpy".
+COPY "src/copy/procedure/input-section.cpy".
+COPY "src/copy/procedure/character-preview.cpy".
+
+*> Build: `cobc -x -o build/character-editor src/cobol/character-editor.cob`

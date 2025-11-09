@@ -46,7 +46,7 @@ WORKING-STORAGE SECTION.
     02 Pair-Entry OCCURS 350 TIMES INDEXED BY PAIR-INDEX.
       03 pair-key PIC X(20) VALUE SPACES.
 
-  COPY "copy/data/input-data.cpy".
+  COPY "src/copy/data/input-data.cpy".
 
 PROCEDURE DIVISION.
 
@@ -234,4 +234,4 @@ LISTING SECTION.
   List-Pair.
     DISPLAY friend-key-1 " + " friend-key-2 " => " relationship " (" friendship-level ")".
 
-COPY "copy/procedure/input-section.cpy".
+COPY "src/copy/procedure/input-section.cpy".
