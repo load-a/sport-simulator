@@ -1,0 +1,68 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. CALENDAR-EDITOR.
+AUTHOR. SARAMIR.
+
+ENVIRONMENT DIVISION.
+INPUT-OUTPUT SECTION.
+FILE-CONTROL.
+  SELECT Calendar ASSIGN TO "data/calendar.dat"
+  ORGANIZATION IS INDEXED
+  ACCESS MODE IS DYNAMIC
+  RECORD KEY numeric-date
+  FILE STATUS IS calendar-file.
+
+DATA DIVISION.
+FILE SECTION.
+FD Calendar
+  LABEL RECORDS ARE STANDARD
+  DATA RECORDS ARE Calendar-Day.
+
+  01 Calendar-Day.
+    02 numeric-date.
+      03 month-number PIC 99 VALUE 10.
+      03 day-number   PIC 9 VALUE 1.
+    02 named-date.
+      03 month-name   PIC X(9).
+      03 day-name     PIC X(8).
+    02 challenger     PIC X(20) VALUE "PICK-UP GAME".
+    02 fortune        PIC X(20) VALUE "NONE".
+
+WORKING-STORAGE SECTION.
+  01 calendar-file PIC 99 VALUE ZEROS.
+    88 end-of-file VALUE 10.
+
+  01 Weekday-Table.
+    02 Weekday-Entry OCCURS 7 TIMES INDEXED BY WEEKDAY-INDEX.
+      03 weekday PIC X(8).
+  01 Month-Table.
+    02 Month-Entry OCCURS 13 TIMES INDEXED BY MONTH-INDEX.
+      03 month PIC X(9).
+
+PROCEDURE DIVISION.
+Initialize-Tables.
+  MOVE "SUNDAY"   TO WEEKDAY(1)
+  MOVE "MOONDAY"  TO WEEKDAY(2)
+  MOVE "EMBERDAY" TO WEEKDAY(3)
+  MOVE "WASHDAY"  TO WEEKDAY(4)
+  MOVE "GAILDAY"  TO WEEKDAY(5)
+  MOVE "STONEDAY" TO WEEKDAY(6)
+  MOVE "STARDAY"  TO WEEKDAY(7)
+
+  MOVE "ZEMBER"     TO MONTH(1)
+  MOVE "ONYX"       TO MONTH(2)
+  MOVE "SILVER"     TO MONTH(3)
+  MOVE "NORTHSTAR"  TO MONTH(4)
+  MOVE "SCARLET"    TO MONTH(5)
+  MOVE "ASH"        TO MONTH(6)
+  MOVE "HEXEMBER"   TO MONTH(7)
+  MOVE "LIGHT"      TO MONTH(8)
+  MOVE "AMBER"      TO MONTH(9)
+  MOVE "EASTSTAR"   TO MONTH(10)
+  MOVE "AZURE"      TO MONTH(11)
+  MOVE "JADE"       TO MONTH(12)
+  MOVE "ISEMBER"    TO MONTH(13).
+
+Main-Logic.
+STOP RUN.
+
+*>Build `cobc -x -o build/calendar-editor src/cobol/calendar-editor.cob`
