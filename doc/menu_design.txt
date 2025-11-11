@@ -1,0 +1,36 @@
+Looping Menu Procedure
+1. Ask for input
+2. Normalize input
+3. Set flag based on input
+4. Branch from flag
+5. Reset loop until exited
+
+Version 1
+perform until quitted
+	ask question
+	get normalized input
+
+	evaluate answer
+		when a
+			set first
+		when b
+			set second
+		else
+			confirm continue
+	end-evaluate
+end-perform
+
+Version 2 (Within another loop)
+perform until quitted
+	ask question
+	get normalized input
+
+	evaluate answer
+		when a
+			set first
+		when b
+			set second
+		else
+			set quit flag
+	end-evaluate
+end-perform

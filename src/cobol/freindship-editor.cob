@@ -26,30 +26,36 @@ FD Friend-List
 
 
 WORKING-STORAGE SECTION.
-  01 friend-file PIC 99.
-    88 end-of-file VALUE 10.
-  01 temp-key    PIC X(10).
-  01 SELECTION-INDEX  PIC 99 VALUE 1.
+  01 friend-file        PIC 99.
+    88 end-of-file      VALUE 10.
+  01 temp-key           PIC X(10).
+  01 SELECTION-INDEX    PIC 99 VALUE 1.
   01 special-characters PIC 9.
-    88 regular VALUE 0.
-    88 yumi VALUE 1.
+    88 regular          VALUE 0.
+    88 yumi             VALUE 1.
 
   01 Character-Table.
     02 Character-Entry OCCURS 26 TIMES INDEXED BY CHARACTER-INDEX.
       03 character-key PIC X(10) VALUE SPACES.
 
   01 Pair-Table.
-    02 pair-counter PIC 9(4) VALUE 1.
-    02 pair-status PIC 9.
-      88 pair-exists VALUE 1.
-      88 new-pair VALUE ZERO.
-    02 Pair-Entry OCCURS 350 TIMES INDEXED BY PAIR-INDEX.
-      03 pair-key PIC X(20) VALUE SPACES.
+    02 pair-counter   PIC 9(4) VALUE 1.
+    02 pair-status    PIC 9.
+      88 pair-exists  VALUE 1.
+      88 new-pair     VALUE ZERO.
+    02 Pair-Entry     OCCURS 350 TIMES INDEXED BY PAIR-INDEX.
+      03 pair-key     PIC X(20) VALUE SPACES.
 
-  COPY "src/copy/data/input-data.cpy".
+  01 program-mode   PIC 9.
+    88 menu-mode    VALUE 0.
+    88 reset-mode   VALUE 1.
+    88 edit-mode    VALUE 2.
+    88 all-mode     VALUE 3.
+    88 single-mode  VALUE 4.
+
+  COPY "src/copy/working-storage/user-interface-data.cpy".
 
 PROCEDURE DIVISION.
-
 Initialize-Table.
   MOVE "ALYSSA"     TO character-key(1)
   MOVE "BARNEY"     TO character-key(2)
@@ -79,22 +85,51 @@ Initialize-Table.
   MOVE "ZYLO"       TO character-key(26).
 
 Main-Logic.
-  MOVE "TYPE COMMAND ([R]ESET | [E]DIT | [L]IST)" TO question.
-  PERFORM Ask.
-  PERFORM Normalize-Response.
+  PERFORM UNTIL ui-quitted
+    PERFORM Mode-Menu
+    PERFORM Execute-Mode
+  END-PERFORM.
+  STOP RUN.
 
-  EVALUATE response
+Mode-Menu.
+  MOVE "[R]ESET, [E]DIT, [L]IST ALL, LIST [C]HARACTER, [Q]UIT" TO ui-prompt.
+  PERFORM UI-Ask-Normalized.
+
+  EVALUATE ui-answer
     WHEN "R"
+      SET reset-mode TO TRUE
+    WHEN "E"
+      SET edit-mode TO TRUE
+    WHEN "L"
+      SET all-mode TO TRUE
+    WHEN "C"
+      SET single-mode TO TRUE
+    WHEN "Q"
+      SET ui-quitted TO TRUE
+    WHEN OTHER
+      DISPLAY "INVALID CHOICE"
+  END-EVALUATE.
+
+Execute-Mode.
+  IF menu-mode
+    EXIT PARAGRAPH
+  END-IF
+
+  EVALUATE TRUE
+    WHEN reset-mode
       DISPLAY "RESETTING FRIEND-LIST..."
       PERFORM Reset-File
-    WHEN "E"
+    WHEN edit-mode
       PERFORM Edit-Friendship
-    WHEN "L"
+    WHEN all-mode
       PERFORM List-All
+    WHEN single-mode
+      PERFORM List-Character
     WHEN OTHER
-      DISPLAY "GOOD-BYE"
-  END-EVALUATE.
-STOP RUN.
+      DISPLAY "INVARIANT VIOLATION: ENTERED `EXECUTE-MODE` WITH INVALID PROGRAM-MODE"
+  END-EVALUATE
+
+  SET menu-mode TO TRUE.
 
 CREATION SECTION.
   Reset-File.
@@ -155,16 +190,16 @@ CREATION SECTION.
 
 EDIT SECTION.
   Edit-Friendship.
-    PERFORM UNTIL denied
-      MOVE "ENTER CHARACTER 1" TO question
-      PERFORM Ask
-      PERFORM Normalize-Response
-      MOVE response TO friend-key-1
+    PERFORM UNTIL ui-denied
+      MOVE "ENTER CHARACTER 1" TO ui-prompt
+      PERFORM UI-Ask
+      PERFORM UI-Normalize-Answer
+      MOVE ui-answer TO friend-key-1
 
-      MOVE "ENTER CHARACTER 2" TO question
-      PERFORM Ask
-      PERFORM Normalize-Response
-      MOVE response TO friend-key-2
+      MOVE "ENTER CHARACTER 2" TO ui-prompt
+      PERFORM UI-Ask
+      PERFORM UI-Normalize-Answer
+      MOVE ui-answer TO friend-key-2
 
       PERFORM Build-Pairing
 
@@ -178,23 +213,23 @@ EDIT SECTION.
             DISPLAY SPACES
 
             DISPLAY "GUIDE: ACQUAINT.(000), FRIENDS(200), BEST FRIENDS(400), FAMILY(600), MORE(800)"
-            MOVE "ENTER RELATIONSHIP (20)" TO question
-            PERFORM Ask
-            PERFORM Normalize-Response
+            MOVE "ENTER RELATIONSHIP (20)" TO ui-prompt
+            PERFORM UI-Ask
+            PERFORM UI-Normalize-Answer
 
-            IF valid-text
-              MOVE response TO relationship
+            IF ui-valid-text
+              MOVE ui-answer TO relationship
               DISPLAY "UPDATING RELATIONSHIP"
               REWRITE Friend-Record
             ELSE
               DISPLAY "NO CHANGE"
             END-IF
 
-            MOVE "ENTER LEVEL(###)" TO question
-            PERFORM Ask-Number
+            MOVE "ENTER LEVEL(###)" TO ui-prompt
+            PERFORM UI-Ask-Number
 
-            IF valid-number
-              MOVE input-number TO friendship-level
+            IF ui-valid-number
+              MOVE ui-number TO friendship-level
               DISPLAY "UPDATING LEVEL"
               REWRITE Friend-Record
             ELSE
@@ -209,8 +244,8 @@ EDIT SECTION.
         END-READ
       CLOSE Friend-List
 
-      MOVE "EDIT ANOTHER FRIENDSHIP" TO question
-      PERFORM Confirm
+      MOVE "EDIT ANOTHER FRIENDSHIP" TO ui-prompt
+      PERFORM UI-Confirm
     END-PERFORM.
 
 LISTING SECTION.
@@ -231,7 +266,33 @@ LISTING SECTION.
       END-START
     CLOSE Friend-List.
 
-  List-Pair.
-    DISPLAY friend-key-1 " + " friend-key-2 " => " relationship " (" friendship-level ")".
+  List-Character.
+    MOVE "WHICH CHARACTER" TO ui-prompt
+    PERFORM UI-Ask
+    PERFORM UI-Normalize-Answer
+    MOVE ui-answer TO temp-key
 
-COPY "src/copy/procedure/input-section.cpy".
+    OPEN INPUT Friend-List
+      MOVE LOW-VALUE TO pairing
+      START Friend-List KEY >= pairing
+        INVALID KEY DISPLAY "NO FRIENDSHIPS FOUND"
+        NOT INVALID KEY
+          PERFORM UNTIL end-of-file
+            READ Friend-List NEXT RECORD
+              AT END
+                SET end-of-file TO TRUE
+              NOT AT END
+                IF temp-key = friend-key-1 OR temp-key = friend-key-2
+                  PERFORM List-Pair
+                END-IF
+            END-READ
+          END-PERFORM
+      END-START
+    CLOSE Friend-List.
+
+  List-Pair.
+    DISPLAY friend-key-1 "& " friend-key-2 "- " relationship " " friendship-level.
+
+COPY "src/copy/procedure/user-interface.cpy".
+
+*> Build: `cobc -x -o build/friendship-editor src/cobol/freindship-editor.cob`

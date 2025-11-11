@@ -1,3 +1,4 @@
+CHARACTER-PREVIEW SECTION.
 Preview-Character.
   DISPLAY SPACES
   DISPLAY long-name " (" FUNCTION TRIM(short-name) ")"

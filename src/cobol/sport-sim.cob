@@ -13,7 +13,7 @@ FILE-CONTROL.
 DATA DIVISION.
 FILE SECTION.
 FD CharacterSheet.
-  COPY "src/copy/data/character-record.cpy".
+  COPY "src/copy/file-description/character-record.cpy".
 
 WORKING-STORAGE SECTION.
   01 File-Status PIC 99.
@@ -40,3 +40,5 @@ STOP RUN.
 
 USER-INTERFACE SECTION.
 COPY "src/copy/procedure/character-preview.cpy".
+
+*> Build `cobc -x -o build/sport-sim src/cobol/sport-sim.cob`
