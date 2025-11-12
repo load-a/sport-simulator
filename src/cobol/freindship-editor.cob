@@ -26,11 +26,21 @@ FD Friend-List
 
 
 WORKING-STORAGE SECTION.
+  78 ACT-EDIT-FRIENDSHIP  VALUE "EDIT-FRIENDSHIP".
+  78 ACT-LIST-ALL         VALUE "LIST-ALL".
+  78 ACT-LIST-CHARACTER   VALUE "LIST-CHARACTER".
+  78 ACT-RESET-FILE       VALUE "RESET-FILE".
+  78 ACT-QUIT             VALUE "QUIT".
+  78 MENU-LENGTH          VALUE 5.
+
   01 friend-file        PIC 99.
     88 end-of-file      VALUE 10.
+
   01 temp-key           PIC X(10).
+
   01 SELECTION-INDEX    PIC 99 VALUE 1.
-  01 special-characters PIC 9.
+
+  01 Special-Characters PIC 9.
     88 regular          VALUE 0.
     88 yumi             VALUE 1.
 
@@ -46,17 +56,20 @@ WORKING-STORAGE SECTION.
     02 Pair-Entry     OCCURS 350 TIMES INDEXED BY PAIR-INDEX.
       03 pair-key     PIC X(20) VALUE SPACES.
 
-  01 program-mode   PIC 9.
-    88 menu-mode    VALUE 0.
-    88 reset-mode   VALUE 1.
-    88 edit-mode    VALUE 2.
-    88 all-mode     VALUE 3.
-    88 single-mode  VALUE 4.
+  01 Program-Mode   PIC 9.
+    88 menu-mode    VALUE ZERO.
+    88 quit-mode    VALUES 1 THROUGH 9.
+
+  01 Menu-Table.
+    02 Menu-Entry OCCURS MENU-LENGTH TIMES INDEXED BY MENU-INDEX.
+      03 menu-key PIC X.
+      03 menu-action PIC X(20).
 
   COPY "src/copy/working-storage/user-interface-data.cpy".
 
 PROCEDURE DIVISION.
-Initialize-Table.
+Initialize-Pair-Table.
+  SET PAIR-INDEX TO 1
   MOVE "ALYSSA"     TO character-key(1)
   MOVE "BARNEY"     TO character-key(2)
   MOVE "CHARLES"    TO character-key(3)
@@ -84,52 +97,43 @@ Initialize-Table.
   MOVE "YUMI"       TO character-key(25)
   MOVE "ZYLO"       TO character-key(26).
 
+Initialize-Menu-Table.
+  SET MENU-INDEX TO 1
+  MOVE "E" TO menu-key(1) MOVE ACT-EDIT-FRIENDSHIP  TO menu-action(1)
+  MOVE "L" TO menu-key(2) MOVE ACT-LIST-ALL         TO menu-action(2)
+  MOVE "C" TO menu-key(3) MOVE ACT-LIST-CHARACTER   TO menu-action(3)
+  MOVE "R" TO menu-key(4) MOVE ACT-RESET-FILE       TO menu-action(4)
+  MOVE "Q" TO menu-key(5) MOVE ACT-QUIT             TO menu-action(5).
+
 Main-Logic.
   PERFORM UNTIL ui-quitted
-    PERFORM Mode-Menu
-    PERFORM Execute-Mode
+    SET menu-mode TO TRUE
+    PERFORM Menu-Stage
+    PERFORM Execute-Stage
   END-PERFORM.
   STOP RUN.
 
-Mode-Menu.
-  MOVE "[R]ESET, [E]DIT, [L]IST ALL, LIST [C]HARACTER, [Q]UIT" TO ui-prompt.
+Menu-Stage.
+  PERFORM VARYING MENU-INDEX FROM 1 BY 1 UNTIL MENU-INDEX > MENU-LENGTH
+    DISPLAY menu-key(MENU-INDEX) ": " menu-action(MENU-INDEX)
+  END-PERFORM
+
+  MOVE "CHOSE ACTION" TO ui-prompt.
   PERFORM UI-Ask-Normalized.
 
-  EVALUATE ui-answer
-    WHEN "R"
-      SET reset-mode TO TRUE
-    WHEN "E"
-      SET edit-mode TO TRUE
-    WHEN "L"
-      SET all-mode TO TRUE
-    WHEN "C"
-      SET single-mode TO TRUE
-    WHEN "Q"
-      SET ui-quitted TO TRUE
-    WHEN OTHER
-      DISPLAY "INVALID CHOICE"
-  END-EVALUATE.
-
-Execute-Mode.
-  IF menu-mode
-    EXIT PARAGRAPH
-  END-IF
-
-  EVALUATE TRUE
-    WHEN reset-mode
-      DISPLAY "RESETTING FRIEND-LIST..."
-      PERFORM Reset-File
-    WHEN edit-mode
-      PERFORM Edit-Friendship
-    WHEN all-mode
-      PERFORM List-All
-    WHEN single-mode
-      PERFORM List-Character
-    WHEN OTHER
-      DISPLAY "INVARIANT VIOLATION: ENTERED `EXECUTE-MODE` WITH INVALID PROGRAM-MODE"
-  END-EVALUATE
-
-  SET menu-mode TO TRUE.
+Execute-Stage.
+  SET MENU-INDEX TO 1
+  SEARCH Menu-Entry
+    AT END DISPLAY "INVALID CHOICE"
+    WHEN menu-key(MENU-INDEX) = ui-answer
+      EVALUATE menu-action(MENU-INDEX)
+        WHEN ACT-EDIT-FRIENDSHIP  PERFORM Edit-Friendship
+        WHEN ACT-LIST-ALL         PERFORM List-All
+        WHEN ACT-LIST-CHARACTER   PERFORM List-Character
+        WHEN ACT-RESET-FILE       PERFORM Reset-File
+        WHEN ACT-QUIT             SET quit-mode TO TRUE
+      END-EVALUATE
+  END-SEARCH.
 
 CREATION SECTION.
   Reset-File.
