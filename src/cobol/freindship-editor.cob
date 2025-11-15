@@ -26,6 +26,9 @@ FD Friend-List
 
 
 WORKING-STORAGE SECTION.
+  COPY "src/copy/working-storage/user-interface-data.cpy".
+  COPY "src/copy/working-storage/main-cast-data.cpy".
+
   78 ACT-EDIT-FRIENDSHIP  VALUE "EDIT-FRIENDSHIP".
   78 ACT-LIST-ALL         VALUE "LIST-ALL".
   78 ACT-LIST-CHARACTER   VALUE "LIST-CHARACTER".
@@ -44,10 +47,6 @@ WORKING-STORAGE SECTION.
     88 regular          VALUE 0.
     88 yumi             VALUE 1.
 
-  01 Character-Table.
-    02 Character-Entry OCCURS 26 TIMES INDEXED BY CHARACTER-INDEX.
-      03 character-key PIC X(10) VALUE SPACES.
-
   01 Pair-Table.
     02 pair-counter   PIC 9(4) VALUE 1.
     02 pair-status    PIC 9.
@@ -65,37 +64,11 @@ WORKING-STORAGE SECTION.
       03 menu-key PIC X.
       03 menu-action PIC X(20).
 
-  COPY "src/copy/working-storage/user-interface-data.cpy".
 
 PROCEDURE DIVISION.
 Initialize-Pair-Table.
   SET PAIR-INDEX TO 1
-  MOVE "ALYSSA"     TO character-key(1)
-  MOVE "BARNEY"     TO character-key(2)
-  MOVE "CHARLES"    TO character-key(3)
-  MOVE "DOUG"       TO character-key(4)
-  MOVE "EMANON"     TO character-key(5)
-  MOVE "FAZE"       TO character-key(6)
-  MOVE "GEMMA"      TO character-key(7)
-  MOVE "HARAMATSU"  TO character-key(8)
-  MOVE "IVAN"       TO character-key(9)
-  MOVE "J.J."       TO character-key(10)
-  MOVE "KORI"       TO character-key(11)
-  MOVE "LEIF"       TO character-key(12)
-  MOVE "MEL"        TO character-key(13)
-  MOVE "NIAMH"      TO character-key(14)
-  MOVE "ORICK"      TO character-key(15)
-  MOVE "PETRA"      TO character-key(16)
-  MOVE "QUILL"      TO character-key(17)
-  MOVE "RAY"        TO character-key(18)
-  MOVE "SARA"       TO character-key(19)
-  MOVE "TOMOE"      TO character-key(20)
-  MOVE "UMBER"      TO character-key(21)
-  MOVE "VERA"       TO character-key(22)
-  MOVE "WINSTON"    TO character-key(23)
-  MOVE "XIA"        TO character-key(24)
-  MOVE "YUMI"       TO character-key(25)
-  MOVE "ZYLO"       TO character-key(26).
+  PERFORM Initialize-MC-Table.
 
 Initialize-Menu-Table.
   SET MENU-INDEX TO 1
@@ -125,7 +98,7 @@ Execute-Stage.
   SET MENU-INDEX TO 1
   SEARCH Menu-Entry
     AT END DISPLAY "INVALID CHOICE"
-    WHEN menu-key(MENU-INDEX) = ui-answer
+    WHEN menu-key(MENU-INDEX) = ui-response
       EVALUATE menu-action(MENU-INDEX)
         WHEN ACT-EDIT-FRIENDSHIP  PERFORM Edit-Friendship
         WHEN ACT-LIST-ALL         PERFORM List-All
@@ -139,13 +112,13 @@ CREATION SECTION.
   Reset-File.
     OPEN OUTPUT Friend-List 
       PERFORM VARYING SELECTION-INDEX FROM 1 BY 1 UNTIL SELECTION-INDEX > 26
-        PERFORM Write-Freindships VARYING CHARACTER-INDEX FROM 1 BY 1 UNTIL CHARACTER-INDEX > 26
+        PERFORM Write-Freindships VARYING MC-INDEX FROM 1 BY 1 UNTIL MC-INDEX > 26
       END-PERFORM
     CLOSE Friend-List.
 
   Write-Freindships.
-    MOVE character-key(SELECTION-INDEX) TO friend-key-1
-    MOVE character-key(CHARACTER-INDEX) TO friend-key-2
+    MOVE main-cast-key(SELECTION-INDEX) TO friend-key-1
+    MOVE main-cast-key(MC-INDEX) TO friend-key-2
 
     IF friend-key-1 = friend-key-2
       EXIT PARAGRAPH
@@ -197,13 +170,13 @@ EDIT SECTION.
     PERFORM UNTIL ui-denied
       MOVE "ENTER CHARACTER 1" TO ui-prompt
       PERFORM UI-Ask
-      PERFORM UI-Normalize-Answer
-      MOVE ui-answer TO friend-key-1
+      PERFORM UI-Normalize-Response
+      MOVE ui-response TO friend-key-1
 
       MOVE "ENTER CHARACTER 2" TO ui-prompt
       PERFORM UI-Ask
-      PERFORM UI-Normalize-Answer
-      MOVE ui-answer TO friend-key-2
+      PERFORM UI-Normalize-Response
+      MOVE ui-response TO friend-key-2
 
       PERFORM Build-Pairing
 
@@ -219,10 +192,10 @@ EDIT SECTION.
             DISPLAY "GUIDE: ACQUAINT.(000), FRIENDS(200), BEST FRIENDS(400), FAMILY(600), MORE(800)"
             MOVE "ENTER RELATIONSHIP (20)" TO ui-prompt
             PERFORM UI-Ask
-            PERFORM UI-Normalize-Answer
+            PERFORM UI-Normalize-Response
 
             IF ui-valid-text
-              MOVE ui-answer TO relationship
+              MOVE ui-response TO relationship
               DISPLAY "UPDATING RELATIONSHIP"
               REWRITE Friend-Record
             ELSE
@@ -273,8 +246,8 @@ LISTING SECTION.
   List-Character.
     MOVE "WHICH CHARACTER" TO ui-prompt
     PERFORM UI-Ask
-    PERFORM UI-Normalize-Answer
-    MOVE ui-answer TO temp-key
+    PERFORM UI-Normalize-Response
+    MOVE ui-response TO temp-key
 
     OPEN INPUT Friend-List
       MOVE LOW-VALUE TO pairing
@@ -298,5 +271,6 @@ LISTING SECTION.
     DISPLAY friend-key-1 "& " friend-key-2 "- " relationship " " friendship-level.
 
 COPY "src/copy/procedure/user-interface.cpy".
+COPY "src/copy/procedure/main-cast.cpy".
 
 *> Build: `cobc -x -o build/friendship-editor src/cobol/freindship-editor.cob`

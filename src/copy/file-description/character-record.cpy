@@ -1,11 +1,17 @@
 01 character-record.
-  02 short-name     PIC X(10).
-  02 long-name      PIC X(21).
-  02 age            PIC 99.
-  02 gender         PIC X(10).
-  02 race           PIC X(20).
-  02 description    PIC X(80).
-  02 original-team  PIC X(20).
+  02 short-name       PIC X(10).
+  02 long-name        PIC X(21).
+  02 age              PIC 99.
+  02 birthday.
+    03 birth-month    PIC 99.
+    03 birth-day      PIC 99.
+  02 height.
+    03 height-feet    PIC 9.
+    03 height-inches  PIC 99.
+  02 gender           PIC X(10).
+  02 race             PIC X(20).
+  02 description      PIC X(80).
+  02 original-team    PIC X(20).
 
   02 salary.
     03 salary-need  PIC 99 VALUE 30.
@@ -13,6 +19,7 @@
     03 per-diem     PIC 99 VALUE 45.
     03 job          PIC X(10) VALUE "NONE".
     03 skill        PIC X(10) VALUE "NONE".
+    02 hobby        PIC X(10) VALUE "NONE".
 
   02 performance.
     03 level          PIC 9 VALUE 1.

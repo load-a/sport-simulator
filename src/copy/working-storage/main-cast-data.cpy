@@ -1,0 +1,4 @@
+78 MC-TABLE-LENGTH        VALUE 26.
+01 Main-Cast-Table.
+  02 Main-Cast-Entry OCCURS MC-TABLE-LENGTH TIMES INDEXED BY MC-INDEX.
+    03 main-cast-key PIC X(10) VALUE SPACES.

@@ -124,7 +124,7 @@ Calendar-Function.
 
   SEARCH Menu-Entry
     AT END DISPLAY "INVALID ACTION"
-    WHEN menu-key(MENU-INDEX) = ui-answer
+    WHEN menu-key(MENU-INDEX) = ui-response
       EVALUATE menu-action(MENU-INDEX)
         WHEN ACT-EDIT   PERFORM Edit-Event
         WHEN ACT-CLEAR  PERFORM Clear-Event
@@ -183,26 +183,26 @@ ACTION SECTION.
       MOVE "ENTER CHALLENGER" TO ui-prompt
       PERFORM UI-Ask-Normalized
       IF NOT ui-empty-answer
-        MOVE ui-answer TO challenger
+        MOVE ui-response TO challenger
       END-IF
 
       IF day-number = 1
         MOVE "ENTER TRAVEL OPTION 1" TO ui-prompt
         PERFORM UI-Ask-Normalized
         IF NOT ui-empty-answer
-          MOVE ui-answer TO travel-option-1
+          MOVE ui-response TO travel-option-1
         END-IF
 
         MOVE "ENTER TRAVEL OPTION 2" TO ui-prompt
         PERFORM UI-Ask-Normalized
         IF NOT ui-empty-answer
-          MOVE ui-answer TO travel-option-2
+          MOVE ui-response TO travel-option-2
         END-IF
       ELSE
         MOVE "ENTER SCRIPTED EVENT" TO ui-prompt
         PERFORM UI-Ask-Normalized
         IF NOT ui-empty-answer
-          MOVE ui-answer TO scripted-event
+          MOVE ui-response TO scripted-event
         END-IF
       END-IF
 
