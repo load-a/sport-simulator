@@ -17,3 +17,5 @@
   88 ui-invalid-text    VALUE 7.
   88 ui-invalid-number  VALUE 8.
   88 ui-invalid-key     VALUE 9.
+
+*> COPY "src/main/copy/working-storage/user-interface-data.cpy".

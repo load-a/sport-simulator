@@ -14,24 +14,24 @@
   02 original-team    PIC X(20).
 
   02 salary.
-    03 salary-need  PIC 99 VALUE 30.
-    03 salary-want  PIC 99 VALUE 60.
-    03 per-diem     PIC 99 VALUE 45.
-    03 job          PIC X(10) VALUE "NONE".
-    03 skill        PIC X(10) VALUE "NONE".
-    02 hobby        PIC X(10) VALUE "NONE".
+    03 salary-need  PIC 99.
+    03 salary-want  PIC 99.
+    03 per-diem     PIC 99.
+    03 job          PIC X(10).
+    03 skill        PIC X(10).
+    02 hobby        PIC X(10).
 
   02 performance.
-    03 level          PIC 9 VALUE 1.
-    03 experience     PIC 99 VALUE ZEROS.
+    03 level          PIC 9.
+    03 experience     PIC 99.
 
-    03 power-stat     PIC 99 VALUE 8.
-    03 power-bonus    PIC 9 VALUE ZEROS.
-    03 focus-stat     PIC 99 VALUE 8.
-    03 focus-bonus    PIC 9 VALUE ZEROS.
-    03 speed-stat     PIC 99 VALUE 8.
-    03 speed-bonus    PIC 9 VALUE ZEROS.
-    03 full-potential PIC 99 VALUE ZEROS.
+    03 power-stat     PIC 99.
+    03 power-bonus    PIC 9.
+    03 focus-stat     PIC 99.
+    03 focus-bonus    PIC 9.
+    03 speed-stat     PIC 99.
+    03 speed-bonus    PIC 9.
+    03 full-potential PIC 99.
 
     03 body                     PIC 999 VALUE 100.
       88 perfect-body           VALUES 125 THROUGH 101.
@@ -51,7 +51,7 @@
       88 neutral-spirit         VALUES 80  THROUGH 61.
       88 annoyed-spirit         VALUES 60  THROUGH 41.
       88 unhappy-spirit         VALUES 40  THROUGH 0.
-    03 effectiveness-multiplier PIC 9V99 VALUE 1.00.
+    03 effectiveness-multiplier PIC 9V99.
 
   02 character-type PIC X(6).
      88 teammate VALUE "PLAYER".

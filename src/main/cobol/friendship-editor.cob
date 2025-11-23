@@ -26,8 +26,8 @@ FD Friend-List
 
 
 WORKING-STORAGE SECTION.
-  COPY "src/copy/working-storage/user-interface-data.cpy".
-  COPY "src/copy/working-storage/main-cast-data.cpy".
+  COPY "src/main/copy/working-storage/user-interface-data.cpy".
+  COPY "src/main/copy/working-storage/main-cast-data.cpy".
 
   78 ACT-EDIT-FRIENDSHIP  VALUE "EDIT-FRIENDSHIP".
   78 ACT-LIST-ALL         VALUE "LIST-ALL".
@@ -270,7 +270,7 @@ LISTING SECTION.
   List-Pair.
     DISPLAY friend-key-1 "& " friend-key-2 "- " relationship " " friendship-level.
 
-COPY "src/copy/procedure/user-interface.cpy".
-COPY "src/copy/procedure/main-cast.cpy".
+COPY "src/main/copy/procedure/user-interface.cpy".
+COPY "src/main/copy/procedure/main-cast.cpy".
 
-*> Build: `cobc -x -o build/friendship-editor src/cobol/freindship-editor.cob`
+*> Build: `cobc -x -o build/friendship-editor src/main/cobol/freindship-editor.cob`

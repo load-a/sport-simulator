@@ -13,10 +13,10 @@ FILE-CONTROL.
 DATA DIVISION.
 FILE SECTION.
 FD CharacterSheet.
-  COPY "src/copy/file-description/character-record.cpy".
+  COPY "src/main/copy/file-description/character-record.cpy".
 
 WORKING-STORAGE SECTION.
-  COPY "src/copy/working-storage/character-data.cpy".
+  COPY "src/main/copy/working-storage/character-data.cpy".
 
   01 File-Status PIC 99.
     88 end-of-file VALUE 10.
@@ -41,6 +41,6 @@ Main-logic.
 STOP RUN.
 
 USER-INTERFACE SECTION.
-COPY "src/copy/procedure/character.cpy".
+COPY "src/main/copy/procedure/character.cpy".
 
-*> Build `cobc -x -o build/sport-sim src/cobol/sport-sim.cob`
+*> Build `cobc -x -o build/sport-sim src/main/cobol/sport-sim.cob`

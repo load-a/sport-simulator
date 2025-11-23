@@ -65,7 +65,7 @@ WORKING-STORAGE SECTION.
   01 ignore-quotient PIC 9.
   01 creation-id PIC 9999 VALUE ZEROS.
 
-COPY "src/copy/working-storage/user-interface-data.cpy".
+COPY "src/main/copy/working-storage/user-interface-data.cpy".
 
 PROCEDURE DIVISION.
 Initialize-Tables.
@@ -164,7 +164,7 @@ ACTION SECTION.
     DISPLAY "---".
 
   Edit-Event.
-    PERFORM UNTIL ui-denied
+    PERFORM UNTIL ui-exited
       PERFORM Get-Date
 
       IF invalid-mode
@@ -332,6 +332,6 @@ CALENDAR-INTERFACE-SECTION.
     END-IF.
 
 COPYBOOK SECTION.
-  COPY "src/copy/procedure/user-interface.cpy".
+  COPY "src/main/copy/procedure/user-interface.cpy".
 
-*>Build `cobc -x -o build/calendar-editor src/cobol/calendar-editor.cob`
+*>Build `cobc -x -o build/calendar-editor src/main/cobol/calendar-editor.cob`

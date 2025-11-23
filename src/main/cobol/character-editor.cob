@@ -13,18 +13,18 @@ FILE-CONTROL.
 DATA DIVISION.
 FILE SECTION.
 FD Character-Roster.
-  COPY "src/copy/file-description/character-record.cpy".
+  COPY "src/main/copy/file-description/character-record.cpy".
 
 WORKING-STORAGE SECTION.
-  COPY "src/copy/working-storage/user-interface-data.cpy".
-  COPY "src/copy/working-storage/character-data.cpy".
-  COPY "src/copy/working-storage/main-cast-data.cpy".
+  COPY "src/main/copy/working-storage/user-interface-data.cpy".
+  COPY "src/main/copy/working-storage/character-data.cpy".
+  COPY "src/main/copy/working-storage/main-cast-data.cpy".
 
-  78 ACT-CREATE         VALUE "CREATE-CHARACTER".
+  78 ACT-NEW            VALUE "NEW-CHARACTER".
   78 ACT-EDIT           VALUE "EDIT-CHARACTER".
   78 ACT-DELETE         VALUE "DELETE-CHARACTER".
   78 ACT-ALL            VALUE "LIST-ALL".
-  78 ACT-LIST           VALUE "LIST-CHARACTER".
+  78 ACT-INFO           VALUE "CHARACTER-INFO".
   78 ACT-RESET          VALUE "RESET-FILE".
   78 ACT-QUIT           VALUE "QUIT".
   78 MENU-TABLE-LENGTH  VALUE 7.
@@ -47,8 +47,11 @@ WORKING-STORAGE SECTION.
     88 end-of-file  VALUE 10.
 
 PROCEDURE DIVISION.
-  PERFORM Initialize-Trait-Table.
-  PERFORM Initialize-Menu-Table.
+MAIN SECTION.
+  Preparation.
+    PERFORM Initialize-Trait-Table.
+    PERFORM Initialize-Menu-Table.
+    PERFORM Initialize-MC-Table.
 
   Main-Logic.
     SET menu-mode TO TRUE.
@@ -60,6 +63,7 @@ PROCEDURE DIVISION.
     END-PERFORM.
   STOP RUN.
 
+SUBROUTINE SECTION.
   Editor-Menu.
     PERFORM VARYING MENU-INDEX FROM 1 BY 1 UNTIL MENU-INDEX > MENU-TABLE-LENGTH
       DISPLAY "[" menu-key(MENU-INDEX) "] " menu-action(MENU-INDEX)
@@ -75,27 +79,16 @@ PROCEDURE DIVISION.
       WHEN menu-key(MENU-INDEX) = ui-head
         PERFORM UI-Clear-Data
         EVALUATE menu-action(MENU-INDEX)
-          WHEN ACT-CREATE PERFORM Try-Create-Character  UNTIL ui-denied
+          WHEN ACT-NEW    PERFORM Try-Create-Character  UNTIL ui-denied
           WHEN ACT-EDIT   PERFORM Try-Edit-Character    UNTIL ui-denied
           WHEN ACT-DELETE PERFORM Try-Delete-Character  UNTIL ui-denied
           WHEN ACT-ALL    PERFORM List-Characters
+          WHEN ACT-INFO   PERFORM Character-Info
           WHEN ACT-RESET  PERFORM Try-Reset-File
           WHEN ACT-QUIT   SET quit-mode TO TRUE
           WHEN OTHER      DISPLAY "NOT IMPLEMENTED"
         END-EVALUATE
     END-SEARCH.
-
-  Try-Reset-File.
-    MOVE "ARE YOU SURE YOU WANT TO RESET THE WHOLE ROSTER?" TO ui-prompt
-    PERFORM UI-Confirm
-
-    IF ui-confirmed
-      DISPLAY "ERASING FILE..."
-      OPEN OUTPUT Character-Roster
-      CLOSE Character-Roster
-    ELSE
-      DISPLAY "RESET CANCELLED."
-    END-IF.
 
   Try-Create-Character.
     PERFORM Lookup-Key
@@ -103,10 +96,12 @@ PROCEDURE DIVISION.
     EVALUATE TRUE
     WHEN new-character
       DISPLAY "CREATING NEW CHARACTER..."
-      PERFORM Assign-All-Fields
+      PERFORM Assign-All-Traits
       PERFORM Confirm-Record-Character
       IF ui-confirmed
         PERFORM Record-New-Character
+      ELSE
+        DISPLAY "CANCELLING NEW CHARACTER..."
       END-IF
     WHEN existing-character
       DISPLAY "CANNOT CREATE EXISTING CHARACTER."
@@ -120,7 +115,6 @@ PROCEDURE DIVISION.
     PERFORM UI-Confirm.
 
   Try-Edit-Character.
-    
     PERFORM Lookup-Key
 
     EVALUATE TRUE
@@ -144,7 +138,6 @@ PROCEDURE DIVISION.
     PERFORM UI-Confirm.
 
   Try-Delete-Character.
-    
     PERFORM Lookup-Key
 
     EVALUATE TRUE
@@ -188,23 +181,85 @@ PROCEDURE DIVISION.
         END-START
       CLOSE Character-Roster.
 
+  Character-Info.
+    PERFORM Lookup-Key
+    IF new-character
+      DISPLAY "NO DATA"
+    ELSE
+      PERFORM Developer-View-Character
+    END-IF.
+
+  Try-Reset-File.
+    MOVE "ARE YOU SURE YOU WANT TO RESET THE WHOLE ROSTER?" TO ui-prompt
+    PERFORM UI-Confirm
+
+    IF ui-confirmed
+      DISPLAY "ERASING FILE..."
+    ELSE
+      DISPLAY "RESET CANCELLED."
+      EXIT PARAGRAPH
+    END-IF
+
+    DISPLAY "BUILDING MAIN CAST..."
+    PERFORM Initialize-Default-Record
+    
+    OPEN OUTPUT Character-Roster
+      PERFORM VARYING MC-INDEX FROM 1 BY 1 UNTIL MC-INDEX > MC-TABLE-LENGTH
+        MOVE main-cast-key(MC-INDEX) TO short-name
+        MOVE short-name TO long-name
+        WRITE Character-Record
+      END-PERFORM
+    CLOSE Character-Roster.
+
+  Initialize-Default-Record.
+    PERFORM VARYING TRAIT-INDEX FROM 2 BY 1 UNTIL TRAIT-INDEX > TRAIT-TABLE-LENGTH
+      EVALUATE TRAIT-INDEX
+        WHEN 2 MOVE trait-default(TRAIT-INDEX) TO age
+        WHEN 3 MOVE trait-default(TRAIT-INDEX) TO birth-month
+        WHEN 4 MOVE trait-default(TRAIT-INDEX) TO birth-day
+        WHEN 5 MOVE trait-default(TRAIT-INDEX) TO height
+        WHEN 6 MOVE trait-default(TRAIT-INDEX) TO gender
+        WHEN 7 MOVE trait-default(TRAIT-INDEX) TO race
+        WHEN 8 MOVE trait-default(TRAIT-INDEX) TO description
+        WHEN 9 MOVE trait-default(TRAIT-INDEX) TO original-team
+        WHEN 10 MOVE trait-default(TRAIT-INDEX) TO salary-need
+        WHEN 11 MOVE trait-default(TRAIT-INDEX) TO salary-want
+        WHEN 12 MOVE trait-default(TRAIT-INDEX) TO per-diem
+        WHEN 13 MOVE trait-default(TRAIT-INDEX) TO job
+        WHEN 14 MOVE trait-default(TRAIT-INDEX) TO skill
+        WHEN 15 MOVE trait-default(TRAIT-INDEX) TO hobby
+        WHEN 16 MOVE trait-default(TRAIT-INDEX) TO level
+        WHEN 17 MOVE trait-default(TRAIT-INDEX) TO experience
+        WHEN 18 MOVE trait-default(TRAIT-INDEX) TO power-stat
+        WHEN 19 MOVE trait-default(TRAIT-INDEX) TO focus-stat
+        WHEN 20 MOVE trait-default(TRAIT-INDEX) TO speed-stat
+        WHEN 21 MOVE trait-default(TRAIT-INDEX) TO power-bonus
+        WHEN 22 MOVE trait-default(TRAIT-INDEX) TO focus-bonus
+        WHEN 23 MOVE trait-default(TRAIT-INDEX) TO speed-bonus
+        WHEN 24 MOVE trait-default(TRAIT-INDEX) TO body
+        WHEN 25 MOVE trait-default(TRAIT-INDEX) TO mind
+        WHEN 26 MOVE trait-default(TRAIT-INDEX) TO spirit
+        WHEN 27 MOVE trait-default(TRAIT-INDEX) TO character-type        
+      END-EVALUATE
+    END-PERFORM.
+
 CHARACTER-EDIT SECTION.
-  Assign-All-Fields.
+  Assign-All-Traits.
     PERFORM Reset-Index
 
     PERFORM UNTIL TRAIT-INDEX > TRAIT-TABLE-LENGTH
-      PERFORM Assign-Field
+      PERFORM Assign-Trait
       PERFORM Increment-Index
     END-PERFORM.
 
-  Assign-Field.
+  Assign-Trait.
     PERFORM UI-Clear-Data
     EVALUATE trait-code(TRAIT-INDEX)
       WHEN "LONG-NAME"
         MOVE "ENTER LONG NAME (21)" TO ui-prompt
         PERFORM UI-Ask
         IF ui-empty-answer
-          MOVE trait-default(TRAIT-INDEX) TO long-name
+          MOVE short-name TO long-name
         ELSE
           MOVE ui-response TO long-name
         END-IF
@@ -214,7 +269,8 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO age
         ELSE
-          MOVE ui-number TO age
+          DISPLAY "UI-NUM: " ui-status
+          MOVE FUNCTION NUMVAL(ui-number) TO age
         END-IF
       WHEN "BIRTH-MONTH"
         MOVE "ENTER BIRTH MONTH (##)" TO ui-prompt
@@ -222,7 +278,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO birth-month
         ELSE
-          MOVE ui-number TO birth-month
+          MOVE FUNCTION NUMVAL(ui-number) TO birth-month
         END-IF
       WHEN "BIRTH-DAY"
         MOVE "ENTER BIRTH DAY (##)" TO ui-prompt
@@ -230,32 +286,30 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO birth-day
         ELSE
-          MOVE ui-number TO birth-day
+          MOVE FUNCTION NUMVAL(ui-number) TO birth-day
         END-IF
       WHEN "HEIGHT"
         MOVE "ENTER HEIGHT (Fii)" TO ui-prompt
         PERFORM UI-Ask-Number
         IF ui-invalid-number
-          MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO height
+          MOVE trait-default(TRAIT-INDEX) TO height
         ELSE
           MOVE ui-number TO height
         END-IF
       WHEN "GENDER"
         MOVE "ENTER GENDER (10)" TO ui-prompt
-        PERFORM UI-Ask
+        PERFORM UI-Ask-Normalized
         IF ui-empty-answer
           MOVE trait-default(TRAIT-INDEX) TO gender
         ELSE
-          PERFORM UI-Normalize-Response
           MOVE ui-response TO gender
         END-IF
       WHEN "RACE"
         MOVE "ENTER RACE (20)" TO ui-prompt
-        PERFORM UI-Ask
+        PERFORM UI-Ask-Normalized
         IF ui-empty-answer
           MOVE trait-default(TRAIT-INDEX) TO race
         ELSE
-          PERFORM UI-Normalize-Response
           MOVE ui-response TO race
         END-IF
       WHEN "DESCRIPTION"
@@ -268,11 +322,10 @@ CHARACTER-EDIT SECTION.
         END-IF
       WHEN "ORIGINAL-TEAM"
         MOVE "ENTER TEAM (20)" TO ui-prompt
-        PERFORM UI-Ask
+        PERFORM UI-Ask-Normalized
         IF ui-empty-answer
           MOVE trait-default(TRAIT-INDEX) TO original-team
         ELSE
-          PERFORM UI-Normalize-Response
           MOVE ui-response TO original-team
         END-IF
       WHEN "SALARY-NEED"
@@ -281,7 +334,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO salary-need
         ELSE
-          MOVE ui-number TO salary-need
+          MOVE FUNCTION NUMVAL(ui-number) TO salary-need
         END-IF
       WHEN "SALARY-WANT"
         MOVE "ENTER WANT (##)" TO ui-prompt
@@ -289,7 +342,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO salary-want
         ELSE
-          MOVE ui-number TO salary-want
+          MOVE FUNCTION NUMVAL(ui-number) TO salary-want
         END-IF
       WHEN "PER-DIEM"
         MOVE "ENTER PAY (##)" TO ui-prompt
@@ -297,7 +350,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO per-diem
         ELSE
-          MOVE ui-number TO per-diem
+          MOVE FUNCTION NUMVAL(ui-number) TO per-diem
         END-IF
       WHEN "JOB"
         MOVE "ENTER JOB (10)" TO ui-prompt
@@ -332,7 +385,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO level
         ELSE
-          MOVE ui-number TO level
+          MOVE FUNCTION NUMVAL(ui-number) TO level
         END-IF
       WHEN "EXPERIENCE"
         MOVE "ENTER EXPERIENCE (##)" TO ui-prompt
@@ -340,7 +393,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO experience
         ELSE
-          MOVE ui-number TO experience
+          MOVE FUNCTION NUMVAL(ui-number) TO experience
         END-IF
       WHEN "POWER-STAT"
         MOVE "ENTER POWER (##)" TO ui-prompt
@@ -348,8 +401,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO power-stat
         ELSE
-          PERFORM Validate-Die
-          MOVE ui-number TO power-stat
+          MOVE FUNCTION NUMVAL(ui-number) TO power-stat
         END-IF
       WHEN "POWER-BONUS"
         MOVE "ENTER POWER BONUS (#)" TO ui-prompt
@@ -357,7 +409,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO power-bonus
         ELSE
-          MOVE ui-number TO power-bonus
+          MOVE FUNCTION NUMVAL(ui-number) TO power-bonus
         END-IF
       WHEN "FOCUS-STAT"
         MOVE "ENTER FOCUS (##)" TO ui-prompt
@@ -365,8 +417,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO focus-stat
         ELSE
-          PERFORM Validate-Die
-          MOVE ui-number TO focus-stat
+          MOVE FUNCTION NUMVAL(ui-number) TO focus-stat
         END-IF
       WHEN "FOCUS-BONUS"
         MOVE "ENTER FOCUS BONUS (#)" TO ui-prompt
@@ -374,7 +425,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO focus-bonus
         ELSE
-          MOVE ui-number TO focus-bonus
+          MOVE FUNCTION NUMVAL(ui-number) TO focus-bonus
         END-IF
       WHEN "SPEED-STAT"
         MOVE "ENTER SPEED (##)" TO ui-prompt
@@ -382,8 +433,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO speed-stat
         ELSE
-          PERFORM Validate-Die
-          MOVE ui-number TO speed-stat
+          MOVE FUNCTION NUMVAL(ui-number) TO speed-stat
         END-IF
       WHEN "SPEED-BONUS"
         MOVE "ENTER SPEED BONUS (#)" TO ui-prompt
@@ -391,7 +441,7 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO speed-bonus
         ELSE
-          MOVE ui-number TO speed-bonus
+          MOVE FUNCTION NUMVAL(ui-number) TO speed-bonus
         END-IF
       WHEN "BODY"
         MOVE "ENTER BODY (###)" TO ui-prompt
@@ -445,9 +495,7 @@ CHARACTER-EDIT SECTION.
     DISPLAY "UPDATING CHARACTER RECORD..."
 
     OPEN I-O Character-Roster
-      READ Character-Roster KEY IS short-name
-        INVALID KEY DISPLAY "ERROR: COULD NOT UPDATE CHARACTER RECORD"
-        NOT INVALID KEY REWRITE Character-Record
+      REWRITE Character-Record
     CLOSE Character-Roster.
 
   Select-Field.
@@ -466,7 +514,7 @@ CHARACTER-EDIT SECTION.
         AT END 
           DISPLAY "INVALID FIELD: " trait-buffer
         WHEN trait-label(TRAIT-INDEX) = trait-buffer
-          PERFORM Assign-Field
+          PERFORM Assign-Trait
       END-SEARCH
     END-IF.
 
@@ -479,19 +527,13 @@ CHARACTER-EDIT SECTION.
     PERFORM Set-UI-Key-Status
 
     IF ui-invalid-key
-      DISPLAY "INVALID KEY"
       SET invalid-character TO TRUE
+      EXIT PARAGRAPH
     END-IF    
 
     PERFORM Validate-Character-Status.
 
 VALIDATION SECTION.
-  Validate-Die.
-    IF NOT valid-die
-      DISPLAY "INVALID DIE NUMBER. DEFAULTING TO 8"
-      MOVE 8 to ui-number
-    END-IF.
-
   Set-UI-Key-Status.
     IF ui-empty-answer OR ui-invalid-text
       SET ui-invalid-key TO TRUE
@@ -513,17 +555,17 @@ VALIDATION SECTION.
 MAIN-MENU SECTION.
   Initialize-Menu-Table.
     SET MENU-INDEX TO 1
-    MOVE "C" TO menu-key(1) MOVE ACT-CREATE TO menu-action(1)
+    MOVE "N" TO menu-key(1) MOVE ACT-NEW    TO menu-action(1)
     MOVE "E" TO menu-key(2) MOVE ACT-EDIT   TO menu-action(2)
     MOVE "D" TO menu-key(3) MOVE ACT-DELETE TO menu-action(3)
-    MOVE "A" TO menu-key(4) MOVE ACT-ALL    TO menu-action(4)
-    MOVE "L" TO menu-key(5) MOVE ACT-LIST   TO menu-action(5)
+    MOVE "L" TO menu-key(4) MOVE ACT-ALL    TO menu-action(4)
+    MOVE "C" TO menu-key(5) MOVE ACT-INFO   TO menu-action(5)
     MOVE "R" TO menu-key(6) MOVE ACT-RESET  TO menu-action(6)
     MOVE "Q" TO menu-key(7) MOVE ACT-QUIT   TO menu-action(7).
 
 COPYBOOK SECTION.
-  COPY "src/copy/procedure/user-interface.cpy".
-  COPY "src/copy/procedure/character.cpy".
-  COPY "src/copy/procedure/main-cast.cpy".
+  COPY "src/main/copy/procedure/user-interface.cpy".
+  COPY "src/main/copy/procedure/character.cpy".
+  COPY "src/main/copy/procedure/main-cast.cpy".
 
-*> Build: `cobc -x -o build/character-editor src/cobol/character-editor.cob`
+*> Build: `cobc -x -o build/character-editor src/main/cobol/character-editor.cob`

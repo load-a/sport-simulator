@@ -4,8 +4,15 @@ USER-INTERFACE SECTION.
     PERFORM UI-Normalize-Response.
 
   UI-Ask-Number.
-    PERFORM UI-Ask.
+    PERFORM UI-Ask
+    PERFORM UI-Trim-Response.
     PERFORM UI-Validate-Number.
+  *> IMPORTANT: USE `FUNCTION NUMVAL` WHEN MOVING UI-NUMBER INTO NUMERIC ITEMS WITH FEWER DIGITS
+
+  UI-Ask.
+    DISPLAY FUNCTION TRIM(ui-prompt) ": " WITH NO ADVANCING
+    ACCEPT ui-response
+    PERFORM UI-Validate-Response.
 
   UI-Confirm.
     DISPLAY FUNCTION TRIM(ui-prompt) "? (Y/N): " WITH NO ADVANCING
@@ -17,10 +24,6 @@ USER-INTERFACE SECTION.
       SET ui-denied TO TRUE
     END-IF.
 
-  UI-Ask.
-    DISPLAY FUNCTION TRIM(ui-prompt) ": " WITH NO ADVANCING
-    ACCEPT ui-response.
-
   UI-Clear-Data.
     MOVE SPACES TO ui-prompt
     MOVE SPACES TO ui-response
@@ -30,15 +33,15 @@ USER-INTERFACE SECTION.
 
 ANSWER-FORMATTING SECTION.
   UI-Normalize-Response.
-    PERFORM UI-Trim-Answer
+    PERFORM UI-Trim-Response
     MOVE FUNCTION UPPER-CASE(ui-response) TO ui-response
-    PERFORM UI-Validate-Answer.
+    PERFORM UI-Validate-Response.
 
-  UI-Trim-Answer.
+  UI-Trim-Response.
     MOVE FUNCTION TRIM(ui-response) TO ui-response.
 
 ANSWER-VALIDATION SECTION.
-  UI-Validate-Answer.
+  UI-Validate-Response.
     IF ui-response = SPACES
       SET ui-empty-answer TO TRUE
     ELSE 
@@ -46,16 +49,18 @@ ANSWER-VALIDATION SECTION.
     END-IF.
 
   UI-Validate-Number.
-    IF ui-empty-answer *> This is a necessary redundancy
+    IF ui-empty-answer
       SET ui-invalid-number TO TRUE
-      MOVE ZEROS TO ui-number
+      MOVE 0 TO ui-number
       EXIT PARAGRAPH
     END-IF 
 
-    IF FUNCTION NUMVAL(ui-response) IS NUMERIC
+    IF FUNCTION TRIM(ui-response) IS NUMERIC
       SET ui-valid-number TO TRUE
-      MOVE FUNCTION NUMVAL(ui-response) TO ui-number
+      MOVE FUNCTION TRIM(ui-response) TO ui-number
     ELSE
       SET ui-invalid-number TO TRUE
-      MOVE ZEROS TO ui-number
+      MOVE 0 TO ui-number
     END-IF.
+
+*> COPY "src/main/copy/procedure/user-interface.cpy".

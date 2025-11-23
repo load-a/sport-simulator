@@ -1,4 +1,0 @@
-cobc -x -o build/sport-sim src/cobol/sport-sim.cob;
-cobc -x -o build/friendship-editor src/cobol/freindship-editor.cob;
-cobc -x -o build/character-editor src/cobol/character-editor.cob;
-cobc -x -o build/calendar-editor src/cobol/calendar-editor.cob
