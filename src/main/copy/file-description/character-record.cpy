@@ -53,6 +53,6 @@
       88 unhappy-spirit         VALUES 40  THROUGH 0.
     03 effectiveness-multiplier PIC 9V99.
 
-  02 character-type PIC X(6).
-     88 teammate VALUE "PLAYER".
-     88 opponent VALUE "NPC".
+  02 personality PIC X(10).
+    88 guarded   VALUE "GUARDED".
+    88 npc       VALUE "NPC".

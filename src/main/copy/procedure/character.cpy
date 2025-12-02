@@ -24,7 +24,7 @@ CHARACTER-PREVIEW SECTION.
 
   Developer-View-Character.
     DISPLAY SPACES
-    DISPLAY long-name " (" FUNCTION TRIM(short-name) ") " "<" FUNCTION TRIM(character-type) ">"
+    DISPLAY long-name " (" FUNCTION TRIM(short-name) ") " "<" FUNCTION TRIM(personality) ">"
     DISPLAY "Age: " age " - " birth-month "/" birth-day
     DISPLAY height-feet "'" height-inches QUOTE " - " gender
     DISPLAY "Race: " race
@@ -153,8 +153,8 @@ T-TABLE SECTION.
     MOVE "SPIRIT"         TO trait-code     (26)
 
     MOVE "TYPE"           TO trait-label    (27)
-    MOVE "PC"             TO trait-default  (27)
-    MOVE "CHARACTER-TYPE" TO trait-code     (27).
+    MOVE "NORMAL"         TO trait-default  (27)
+    MOVE "PERSONALITY"    TO trait-code     (27).
 
   Reset-Index.
     SET TRAIT-INDEX TO 1.

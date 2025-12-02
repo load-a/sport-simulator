@@ -79,7 +79,9 @@ Initialize-Menu-Table.
   MOVE "Q" TO menu-key(5) MOVE ACT-QUIT             TO menu-action(5).
 
 Main-Logic.
-  PERFORM UNTIL ui-quitted
+  SET menu-mode TO TRUE
+
+  PERFORM UNTIL quit-mode
     SET menu-mode TO TRUE
     PERFORM Menu-Stage
     PERFORM Execute-Stage
@@ -98,13 +100,15 @@ Execute-Stage.
   SET MENU-INDEX TO 1
   SEARCH Menu-Entry
     AT END DISPLAY "INVALID CHOICE"
-    WHEN menu-key(MENU-INDEX) = ui-response
+    WHEN menu-key(MENU-INDEX) = ui-head
+      PERFORM UI-Clear-Data
       EVALUATE menu-action(MENU-INDEX)
-        WHEN ACT-EDIT-FRIENDSHIP  PERFORM Edit-Friendship
+        WHEN ACT-EDIT-FRIENDSHIP  PERFORM Edit-Friendship UNTIL ui-denied
         WHEN ACT-LIST-ALL         PERFORM List-All
         WHEN ACT-LIST-CHARACTER   PERFORM List-Character
         WHEN ACT-RESET-FILE       PERFORM Reset-File
         WHEN ACT-QUIT             SET quit-mode TO TRUE
+        WHEN OTHER                DISPLAY "INVALID ACTION"
       END-EVALUATE
   END-SEARCH.
 
@@ -273,4 +277,4 @@ LISTING SECTION.
 COPY "src/main/copy/procedure/user-interface.cpy".
 COPY "src/main/copy/procedure/main-cast.cpy".
 
-*> Build: `cobc -x -o build/friendship-editor src/main/cobol/freindship-editor.cob`
+*> Build: `cobc -x -o build/friendship-editor src/main/cobol/friendship-editor.cob`

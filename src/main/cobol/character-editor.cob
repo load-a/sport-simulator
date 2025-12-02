@@ -21,13 +21,14 @@ WORKING-STORAGE SECTION.
   COPY "src/main/copy/working-storage/main-cast-data.cpy".
 
   78 ACT-NEW            VALUE "NEW-CHARACTER".
+  78 ACT-REWRITE        VALUE "REWRITE-CHARACTER".
   78 ACT-EDIT           VALUE "EDIT-CHARACTER".
   78 ACT-DELETE         VALUE "DELETE-CHARACTER".
   78 ACT-ALL            VALUE "LIST-ALL".
   78 ACT-INFO           VALUE "CHARACTER-INFO".
   78 ACT-RESET          VALUE "RESET-FILE".
   78 ACT-QUIT           VALUE "QUIT".
-  78 MENU-TABLE-LENGTH  VALUE 7.
+  78 MENU-TABLE-LENGTH  VALUE 8.
 
   01 Mode-Status PIC 9 VALUE ZERO.
     88 menu-mode   VALUE 0.
@@ -41,7 +42,7 @@ WORKING-STORAGE SECTION.
   01 Menu-Table.
     02 Menu-Entry     OCCURS MENU-TABLE-LENGTH TIMES INDEXED BY MENU-INDEX.
       03 menu-key     PIC X.
-      03 menu-action  PIC X(16).
+      03 menu-action  PIC X(17).
 
   01 File-Status    PIC 99.
     88 end-of-file  VALUE 10.
@@ -79,14 +80,15 @@ SUBROUTINE SECTION.
       WHEN menu-key(MENU-INDEX) = ui-head
         PERFORM UI-Clear-Data
         EVALUATE menu-action(MENU-INDEX)
-          WHEN ACT-NEW    PERFORM Try-Create-Character  UNTIL ui-denied
-          WHEN ACT-EDIT   PERFORM Try-Edit-Character    UNTIL ui-denied
-          WHEN ACT-DELETE PERFORM Try-Delete-Character  UNTIL ui-denied
-          WHEN ACT-ALL    PERFORM List-Characters
-          WHEN ACT-INFO   PERFORM Character-Info
-          WHEN ACT-RESET  PERFORM Try-Reset-File
-          WHEN ACT-QUIT   SET quit-mode TO TRUE
-          WHEN OTHER      DISPLAY "NOT IMPLEMENTED"
+          WHEN ACT-NEW      PERFORM Try-Create-Character  UNTIL ui-denied
+          WHEN ACT-REWRITE  PERFORM Try-Rewrite-Character UNTIL ui-denied
+          WHEN ACT-EDIT     PERFORM Try-Edit-Character    UNTIL ui-denied
+          WHEN ACT-DELETE   PERFORM Try-Delete-Character  UNTIL ui-denied
+          WHEN ACT-ALL      PERFORM List-Characters
+          WHEN ACT-INFO     PERFORM Character-Info
+          WHEN ACT-RESET    PERFORM Try-Reset-File
+          WHEN ACT-QUIT     SET quit-mode TO TRUE
+          WHEN OTHER        DISPLAY "INVALID ACTION"
         END-EVALUATE
     END-SEARCH.
 
@@ -112,6 +114,30 @@ SUBROUTINE SECTION.
     END-EVALUATE
 
     MOVE "CREATE ANOTHER CHARACTER" TO ui-prompt
+    PERFORM UI-Confirm.
+
+  Try-Rewrite-Character.
+    PERFORM Lookup-Key
+
+    EVALUATE TRUE
+    WHEN new-character
+      DISPLAY "CANNOT REWRITE NEW CHARACTER."
+    WHEN existing-character
+    DISPLAY "REWRITING CHARACTER..."
+      PERFORM Assign-All-Traits
+      PERFORM Confirm-Record-Character
+      IF ui-confirmed
+        PERFORM Update-Character
+      ELSE
+        DISPLAY "CANCELLING REWRITE..."
+      END-IF
+    WHEN invalid-character
+      DISPLAY "CANNOT REWRITE INVALID CHARACTER: " ui-response
+    WHEN OTHER
+      DISPLAY "INVARIANT VIOLATION: INVALID CHARACTER-STATUS"
+    END-EVALUATE
+
+    MOVE "REWRITE ANOTHER CHARACTER" TO ui-prompt
     PERFORM UI-Confirm.
 
   Try-Edit-Character.
@@ -239,7 +265,7 @@ SUBROUTINE SECTION.
         WHEN 24 MOVE trait-default(TRAIT-INDEX) TO body
         WHEN 25 MOVE trait-default(TRAIT-INDEX) TO mind
         WHEN 26 MOVE trait-default(TRAIT-INDEX) TO spirit
-        WHEN 27 MOVE trait-default(TRAIT-INDEX) TO character-type        
+        WHEN 27 MOVE trait-default(TRAIT-INDEX) TO personality        
       END-EVALUATE
     END-PERFORM.
 
@@ -269,7 +295,6 @@ CHARACTER-EDIT SECTION.
         IF ui-invalid-number
           MOVE FUNCTION NUMVAL(trait-default(TRAIT-INDEX)) TO age
         ELSE
-          DISPLAY "UI-NUM: " ui-status
           MOVE FUNCTION NUMVAL(ui-number) TO age
         END-IF
       WHEN "BIRTH-MONTH"
@@ -467,13 +492,13 @@ CHARACTER-EDIT SECTION.
         ELSE
           MOVE ui-number TO spirit
         END-IF
-      WHEN "CHARACTER-TYPE"
-        MOVE "ENTER TYPE (PC | NPC | TEST)" TO ui-prompt
+      WHEN "PERSONALITY"
+        MOVE "ENTER TYPE (10)" TO ui-prompt
         PERFORM UI-Ask
         IF ui-empty-answer
-          MOVE trait-default(TRAIT-INDEX) TO character-type
+          MOVE trait-default(TRAIT-INDEX) TO personality
         ELSE
-          MOVE ui-response TO character-type
+          MOVE ui-response TO personality
         END-IF
     END-EVALUATE.
 
@@ -555,13 +580,14 @@ VALIDATION SECTION.
 MAIN-MENU SECTION.
   Initialize-Menu-Table.
     SET MENU-INDEX TO 1
-    MOVE "N" TO menu-key(1) MOVE ACT-NEW    TO menu-action(1)
-    MOVE "E" TO menu-key(2) MOVE ACT-EDIT   TO menu-action(2)
-    MOVE "D" TO menu-key(3) MOVE ACT-DELETE TO menu-action(3)
-    MOVE "L" TO menu-key(4) MOVE ACT-ALL    TO menu-action(4)
-    MOVE "C" TO menu-key(5) MOVE ACT-INFO   TO menu-action(5)
-    MOVE "R" TO menu-key(6) MOVE ACT-RESET  TO menu-action(6)
-    MOVE "Q" TO menu-key(7) MOVE ACT-QUIT   TO menu-action(7).
+    MOVE "N" TO menu-key(1) MOVE ACT-NEW      TO menu-action(1)
+    MOVE "R" TO menu-key(2) MOVE ACT-REWRITE  TO menu-action(2)
+    MOVE "E" TO menu-key(3) MOVE ACT-EDIT     TO menu-action(3)
+    MOVE "D" TO menu-key(4) MOVE ACT-DELETE   TO menu-action(4)
+    MOVE "L" TO menu-key(5) MOVE ACT-ALL      TO menu-action(5)
+    MOVE "I" TO menu-key(6) MOVE ACT-INFO     TO menu-action(6)
+    MOVE "C" TO menu-key(7) MOVE ACT-RESET    TO menu-action(7)
+    MOVE "Q" TO menu-key(8) MOVE ACT-QUIT     TO menu-action(8).
 
 COPYBOOK SECTION.
   COPY "src/main/copy/procedure/user-interface.cpy".

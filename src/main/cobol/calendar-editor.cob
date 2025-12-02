@@ -97,14 +97,14 @@ Initialize-Tables.
   MOVE "E" TO menu-key(1) MOVE ACT-EDIT   TO menu-action(1)
   MOVE "C" TO menu-key(2) MOVE ACT-CLEAR  TO menu-action(2)
   MOVE "R" TO menu-key(3) MOVE ACT-RESET  TO menu-action(3)
-  MOVE "Q" TO menu-key(4) MOVE ACT-QUIT   TO menu-action(4)
-  MOVE "L" TO menu-key(5) MOVE ACT-LIST   TO menu-action(5).
+  MOVE "L" TO menu-key(4) MOVE ACT-LIST   TO menu-action(5)
+  MOVE "Q" TO menu-key(5) MOVE ACT-QUIT   TO menu-action(4).
 
 Initialize-Calendar-Record.
   PERFORM Calculate-Weekday-Index.
 
 Main-Logic.
-  PERFORM UNTIL ui-quitted
+  PERFORM UNTIL quit-mode
     SET menu-mode TO TRUE
     PERFORM Calendar-Menu
     PERFORM Calendar-Function
@@ -129,8 +129,8 @@ Calendar-Function.
         WHEN ACT-EDIT   PERFORM Edit-Event
         WHEN ACT-CLEAR  PERFORM Clear-Event
         WHEN ACT-RESET  PERFORM Reset-Calendar
-        WHEN ACT-QUIT   SET quit-mode TO TRUE
         WHEN ACT-LIST   PERFORM List-Events
+        WHEN ACT-QUIT   SET quit-mode TO TRUE
       END-EVALUATE
   END-SEARCH.
 
