@@ -45,6 +45,12 @@ CHARACTER-PREVIEW SECTION.
     DISPLAY "Speed: " speed-stat " +" speed-bonus "                            Spirit: " spirit
     DISPLAY SPACES.
 
+  CSV-Character.
+    DISPLAY long-name ", " short-name ", " age ", " birth-month ", " birth-day ", " WITH NO ADVANCING
+    DISPLAY height-feet ", " height-inches ", " gender ", " WITH NO ADVANCING
+    DISPLAY race ", " original-team ", " salary-need ", " salary-want ", " WITH NO ADVANCING
+    DISPLAY skill ", " hobby ", " power-stat ", " focus-stat ", " speed-stat.
+
 T-TABLE SECTION. 
   Initialize-Trait-Table.
     SET TRAIT-INDEX TO 1
@@ -152,7 +158,7 @@ T-TABLE SECTION.
     MOVE "100"            TO trait-default  (26)
     MOVE "SPIRIT"         TO trait-code     (26)
 
-    MOVE "TYPE"           TO trait-label    (27)
+    MOVE "PERSONALITY"    TO trait-label    (27)
     MOVE "NORMAL"         TO trait-default  (27)
     MOVE "PERSONALITY"    TO trait-code     (27).
 

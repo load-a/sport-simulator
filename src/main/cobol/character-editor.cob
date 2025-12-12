@@ -27,8 +27,9 @@ WORKING-STORAGE SECTION.
   78 ACT-ALL            VALUE "LIST-ALL".
   78 ACT-INFO           VALUE "CHARACTER-INFO".
   78 ACT-RESET          VALUE "RESET-FILE".
+  78 ACT-EXPORT         VALUE "EXPORT-FILE".
   78 ACT-QUIT           VALUE "QUIT".
-  78 MENU-TABLE-LENGTH  VALUE 8.
+  78 MENU-TABLE-LENGTH  VALUE 9.
 
   01 Mode-Status PIC 9 VALUE ZERO.
     88 menu-mode   VALUE 0.
@@ -87,6 +88,7 @@ SUBROUTINE SECTION.
           WHEN ACT-ALL      PERFORM List-Characters
           WHEN ACT-INFO     PERFORM Character-Info
           WHEN ACT-RESET    PERFORM Try-Reset-File
+          WHEN ACT-EXPORT   PERFORM Export-Records
           WHEN ACT-QUIT     SET quit-mode TO TRUE
           WHEN OTHER        DISPLAY "INVALID ACTION"
         END-EVALUATE
@@ -268,6 +270,15 @@ SUBROUTINE SECTION.
         WHEN 27 MOVE trait-default(TRAIT-INDEX) TO personality        
       END-EVALUATE
     END-PERFORM.
+
+  Export-Records.
+    OPEN INPUT Character-Roster
+      PERFORM VARYING MC-INDEX FROM 1 BY 1 UNTIL MC-INDEX > MC-TABLE-LENGTH
+        MOVE main-cast-key(MC-INDEX) TO short-name
+        READ Character-Roster KEY IS short-name
+        PERFORM CSV-Character
+      END-PERFORM
+    CLOSE Character-Roster.
 
 CHARACTER-EDIT SECTION.
   Assign-All-Traits.
@@ -493,8 +504,8 @@ CHARACTER-EDIT SECTION.
           MOVE ui-number TO spirit
         END-IF
       WHEN "PERSONALITY"
-        MOVE "ENTER TYPE (10)" TO ui-prompt
-        PERFORM UI-Ask
+        MOVE "ENTER PERSONALITY (10)" TO ui-prompt
+        PERFORM UI-Ask-Normalized
         IF ui-empty-answer
           MOVE trait-default(TRAIT-INDEX) TO personality
         ELSE
@@ -587,7 +598,8 @@ MAIN-MENU SECTION.
     MOVE "L" TO menu-key(5) MOVE ACT-ALL      TO menu-action(5)
     MOVE "I" TO menu-key(6) MOVE ACT-INFO     TO menu-action(6)
     MOVE "C" TO menu-key(7) MOVE ACT-RESET    TO menu-action(7)
-    MOVE "Q" TO menu-key(8) MOVE ACT-QUIT     TO menu-action(8).
+    MOVE "O" TO menu-key(8) MOVE ACT-EXPORT   TO menu-action(8)
+    MOVE "Q" TO menu-key(9) MOVE ACT-QUIT     TO menu-action(9).
 
 COPYBOOK SECTION.
   COPY "src/main/copy/procedure/user-interface.cpy".
